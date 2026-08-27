@@ -10,7 +10,7 @@ namespace VeiculosRest2;
 
 public class VeiculosController : ControllerBase
 {
-    public static List<Veiculos> Veiculos = new List<Veiculos>();
+    public static List<Veiculos> VeiculosSalvos = new List<Veiculos>();
 
     [HttpPost]
     public IActionResult Inserir(InserirVeiculosDTO inserirVeiculosDTO)
@@ -29,9 +29,9 @@ public class VeiculosController : ControllerBase
             novoVeiculo.DataAquisição = DateTime.Today;
             novoVeiculo.Id = Guid.NewGuid();
 
-            Veiculos.Add(novoVeiculo);
+            VeiculosSalvos.Add(novoVeiculo);
 
-            return StatusCode(StatusCodes.Status201Created, "Inserido com sucesso");
+            return StatusCode(StatusCodes.Status201Created, new { Message = "inserido com sucesso", id = novoVeiculo.Id });
         }
         catch (Exception e)
         {
@@ -41,14 +41,121 @@ public class VeiculosController : ControllerBase
     [HttpGet]
     public IActionResult Listar()
     {
-            try
-         {
-             return StatusCode(200, Veiculos.ToList());
-         }
-         catch (Exception ex)
-         {
-                return StatusCode(400, ex.Message);
+        try
+        {
+            return StatusCode(200, VeiculosSalvos.ToList());
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(400, ex.Message);
+        }
+    }
+    [HttpGet("{id}")]
+    public IActionResult ListarPorId(Guid id)
+    {
+        try
+        {
+
+            var veiculo = VeiculosSalvos.FirstOrDefault(p => p.Id == id);
+
+            if (veiculo == null)
+            {
+                return StatusCode(StatusCodes.Status404NotFound, "Veículo não encontrado");
             }
+
+            return Ok(veiculo);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status400BadRequest, "Erro ao listar veiculo. Verifique dados");
+        }
+    }
+    [HttpPut("{id}")]
+    public IActionResult Editar(Guid id, EditarVeiculosDTO editarVeiculoDTO)
+    {
+        try
+        {
+            var veiculo = VeiculosSalvos.Where(p => p.Id == id).FirstOrDefault();
+
+            veiculo.Nome = editarVeiculoDTO.Nome;
+            veiculo.Cor = editarVeiculoDTO.Cor;
+            veiculo.Combustivel = editarVeiculoDTO.Combustivel;
+
+            return StatusCode(StatusCodes.Status200OK, "Veiculo editado com sucesso");
+        }
+        catch
+        {
+            return StatusCode(StatusCodes.Status400BadRequest, "Erro ao editar veiculo. Verifique dados");
         }
     }
 
+    [HttpPatch("{id}")]
+    public IActionResult InformarQuilometragem(Guid id, InformarQuilometragemDTO informarQuilometragem)
+    {
+        try
+        {
+            var veiculo = VeiculosSalvos.FirstOrDefault(p => p.Id == id);
+
+            if (veiculo == null)
+            {
+                return StatusCode(StatusCodes.Status404NotFound, "Veículo não encontrado");
+            }
+
+            veiculo.Quilometragem = veiculo.Quilometragem + informarQuilometragem.Quilometragem;
+
+            return StatusCode(StatusCodes.Status200OK, "Quilometragem informada com sucesso");
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message); 
+        }
+    }
+    [HttpDelete("{id}")]
+    
+        public IActionResult Excluir(Guid id)
+        {
+            try
+            {
+                var veiculo = VeiculosSalvos.FirstOrDefault(p => p.Id == id);
+
+                if (veiculo == null)
+                {
+                    return StatusCode(StatusCodes.Status404NotFound, "Veículo não encontrado");
+                }
+
+                VeiculosSalvos.Remove(veiculo);
+
+                return StatusCode(StatusCodes.Status200OK, "Veículo excluído com sucesso");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, "Erro ao excluir veiculo. Verifique dados");
+            }
+        }
+
+    [HttpHead("{id}")]
+    public IActionResult Head(Guid id)
+    {
+        try
+        {
+            var veiculo = VeiculosSalvos.FirstOrDefault(p => p.Id == id);
+            if (veiculo == null)
+            {
+                return StatusCode(StatusCodes.Status404NotFound, "Veículo não encontrado");
+            }
+            return StatusCode(StatusCodes.Status200OK);
+
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status400BadRequest, "Erro ao verificar veiculo. Verifique dados");
+        }
+    }
+
+    [HttpOptions]
+    public IActionResult Opções()
+    {
+        return Ok(new List<string> { "GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS" });
+    }
+
+}
